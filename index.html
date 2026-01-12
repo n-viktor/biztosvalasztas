@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A biztos választás?</title>
+    <style>
+        /* --- ALAP BEÁLLÍTÁSOK --- */
+        :root {
+            --fidesz-orange: #FF6A00;
+            --dark-blue: #003366;
+            --bg-color: #f4f4f4;
+            --reality-bg: #222;
+            --alert-red: #cc0000;
+            --font-main: 'Arial Black', 'Impact', sans-serif;
+            --font-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- FEJLÉC --- */
+        header {
+            background: linear-gradient(135deg, var(--fidesz-orange) 0%, #e05e00 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 5px solid var(--dark-blue);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-family: var(--font-main);
+            text-transform: uppercase;
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 2px 2px 0px var(--dark-blue);
+        }
+
+        p.instruction {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        /* --- JAVÍTOTT RÁCSRENDSZER (FULL WIDTH) --- */
+        .container {
+            width: 95%; /* A képernyő 95%-át használja, nem csak a közepét! */
+            max-width: 1800px; /* Csak extrém széles monitoron áll meg */
+            margin: 0 auto;
+            padding: 0 10px;
+            flex: 1;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 50px;
+            /* AUTO-FIT: Annyi oszlopot tesz egymás mellé, amennyi kifér.
+               MINMAX(300px, 1fr): Egy kártya minimum 300px széles, de ha van hely, nyúlik.
+               Így nem lesznek vékonyak!
+            */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            justify-content: center;
+        }
+
+        /* --- KÁRTYA STÍLUSOK --- */
+        .flip-card {
+            background-color: transparent;
+            height: 480px; /* Magasabbra vettem, hogy szellős legyen */
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            border-radius: 12px;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px; /* Még több hely a szövegnek */
+            box-sizing: border-box;
+        }
+
+        /* Előlap */
+        .flip-card-front {
+            background: linear-gradient(135deg, #FF9F43 0%, var(--fidesz-orange) 100%);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .flip-card-front h2 {
+            font-family: var(--font-main);
+            font-size: 1.8rem; /* Nagyobb, olvashatóbb cím */
+            text-transform: uppercase;
+            border-bottom: 2px solid white;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+
+        .flip-card-front p {
+            font-size: 1.2rem;
+        }
+
+        .icon { font-size: 4.5rem; margin-bottom: 20px; }
+        
+        .click-hint {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.9rem;
+            border: 1px solid white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Hátlap (Valóság) */
+        .flip-card-back {
+            background-color: var(--reality-bg);
+            color: white;
+            transform: rotateY(180deg);
+            border: 2px solid var(--alert-red);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, #2a2a2a 10px, #2a2a2a 20px);
+        }
+
+        .flip-card-back h2 {
+            color: var(--alert-red);
+            font-family: var(--font-main);
+            text-transform: uppercase;
+            font-size: 1.6rem;
+            margin-top: 0;
+        }
+
+        .fact-number {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: var(--alert-red);
+            margin: 15px 0;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* --- FORRÁS LINK --- */
+        .source-link {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.85rem;
+            color: #aaa;
+            text-decoration: none;
+            border-bottom: 1px dotted #aaa;
+            transition: color 0.3s;
+            z-index: 10;
+        }
+
+        .source-link:hover {
+            color: white;
+            border-bottom: 1px solid white;
+        }
+
+        /* --- LÁBLÉC --- */
+        footer {
+            background-color: #111;
+            color: #888;
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 0.85rem;
+            border-top: 4px solid var(--alert-red);
+            margin-top: auto;
+        }
+        
+        footer p { margin: 5px 0; }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>A BIZTOS VÁLASZTÁS?</h1>
+        <div style="font-size: 1.2rem; font-weight:bold; margin-top:5px;">Ami a plakátokról lemaradt...</div>
+    </header>
+
+    <div class="container">
+        <p class="instruction">👇 KATTINTS A KÁRTYÁKRA A TÉNYEKÉRT! 👇</p>
+
+        <div class="grid-container">
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">🎓</div>
+                        <h2>"A JÖVŐNK A GYERMEK"</h2>
+                        <p>Európai színvonalú iskolákat ígértek.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Beázó plafonok és krétahiány.</p>
+                        <span class="fact-number">16 ezer</span>
+                        <p>tanár hiányzik a rendszerből.</p>
+                        <a href="https://lakmusz.hu/2025/10/08/a-kormany-szerint-komoly-elorelepes-tortent-a-kozoktatasban-a-szakszervezet-tovabbra-is-16-ezer-hianyzo-pedagogusrol-beszel" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: Lakmusz / PSZ (2025. október)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">🌳</div>
+                        <h2>"ZÖLD MAGYARORSZÁG"</h2>
+                        <p>Megvédjük a magyar földet és vizeket.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Veszélyes hulladék a kertek alatt.</p>
+                        <span class="fact-number">37 db</span>
+                        <p>tervezett vagy meglévő akkumulátorgyár.</p>
+                        <a href="https://datawrapper.dwcdn.net/CGZs8/5/" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: 444.hu (2024)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">💸</div>
+                        <h2>"ÁRSTOP"</h2>
+                        <p>Megvédjük a családokat a drágulástól.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Európa rekorder élelmiszer-inflációja.</p>
+                        <span class="fact-number">+64,5%</span>
+                        <p>élelmiszerár emelkedés 2022 óta.</p>
+                        <a href="https://www.ksh.hu/stadat_files/ara/hu/ara0040.html" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: KSH (2026. január)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">💰</div>
+                        <h2>"NEMZETI ÉRDEK"</h2>
+                        <p>A magyar vállalkozókat támogatjuk.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Oligarchák gazdagodása.</p>
+                        <span class="fact-number">1749,1 milliárd Ft</span>
+                        <p>Mészáros Lőrinc vagyona.</p>
+                        <a href="https://forbes.hu/extra/50-leggazdagabb-magyar-2025-26/1-meszaros-lorinc" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: Forbes lista (2025. október)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">🏥</div>
+                        <h2>"EGÉSZSÉGES MAGYARORSZÁG"</h2>
+                        <p>Világszínvonalú ellátás minden magyar számára.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Kórházi adósságspirál, hiányzó szakápolók és eszközhiány.</p>
+                        <span class="fact-number">311 nap</span>
+                        <p>az átlagos várakozási idő egy térdprotézis műtétre.</p>
+                        <a href="https://jogviszony.neak.gov.hu/varolista_pub/varolistak-hosszanak-lekerdezese/?ocsk=O20" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: NEAK (2026. január 12.)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">🚂</div>
+                        <h2>"FEJLŐDŐ VASÚT"</h2>
+                        <p>Modernizáljuk a magyar vasutat.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Elöregedett járműpark, sebességkorlátozások a fővonalakon és folyamatos járatkimaradások.</p>
+                        <span class="fact-number">6,9 év</span>
+                        <p>a MÁV 2024-es összkésése. Ez ~3,6 millió perc.</p>
+                        <a href="https://www.mavcsoport.hu/mav-csoport/tavaly-tobb-mint-11-millio-szemelyszallito-vonatot-kozlekedtettunk-otbol-negyet-keses" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: MÁV (2025. február)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">👨‍👩‍👧‍👦</div>
+                        <h2>"CSALÁDBARÁT ORSZÁG"</h2>
+                        <p>Megállítjuk a népességfogyást.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Rekordalacsony születésszám és több százezer külföldön élő magyar.</p>
+                        <span class="fact-number">45 125</span>
+                        <p>magyarral élt kevesebb 2025-ben, mint 2024-ben.</p>
+                        <a href="" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: KSH (2026. január)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon"><img src="https://icons.iconarchive.com/icons/wikipedia/waved-flags/128/Hungary-Waved-Flag-icon.png" alt=""></div>
+                        <h2>"SZUVERENITÁS"</h2>
+                        <p>Megvédjük az ország szuverenitását.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Gazdasági kiszolgáltatottság Kelet felé, miközben az uniós források továbbra is blokkolva vannak.</p>
+                        <span class="fact-number">1 milliárd</span>
+                        <p>eurós kínai gigahitelt vett fel Magyarország.</p>
+                        <a href="https://telex.hu/gazdasag/2024/07/27/ngm-mnb-pm-akk-hitel-adossag-kamat-kinai-egymilliard-euros-hitel" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: Telex (2024. július)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="icon">🔍</div>
+                        <h2>"ZÉRÓ TOLERANCIA"</h2>
+                        <p>Felelősen és átláthatóan gazdálkodunk az adófizetők pénzével.</p>
+                        <div class="click-hint">↻ Fordítsd meg!</div>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2>A VALÓSÁG</h2>
+                        <p>Túlárazott közbeszerzések, ahol a tenderek jelentős részét egyetlen ajánlattevő nyeri.</p>
+                        <span class="fact-number">Utolsó helyen</span>
+                        <p>az Európai Unióban a Transparency International legfrissebb korrupciós érzékelési indexe szerint.</p>
+                        <a href="https://www.transparency.org/en/cpi/2024/index/hun" target="_blank" class="source-link" onclick="event.stopPropagation();">Forrás: Transparency International (2024)</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>Jogi nyilatkozat:</strong> Ez az oldal politikai véleménynyilvánítás, közéleti szatíra és tényfeltárás céljából jött létre. Nem áll kapcsolatban egyetlen politikai párttal sem hivatalos formában.</p>
+        <p>Az oldalon közölt adatok nyilvános és hiteles forrásokból származnak.</p>
+        <p>&copy; 2026 | Minden jog fenntartva.</p>
+    </footer>
+
+    <script>
+        
+    </script>
+</body>
+</html>
